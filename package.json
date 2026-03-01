@@ -1,0 +1,16 @@
+{
+  "name": "obsidian-moments",
+  "version": "1.0.0",
+  "description": "仿微信朋友圈的碎片化记录与照片瀑布流展示插件。",
+  "main": "main.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs dev"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "obsidian": "latest",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2"
+  }
+}
