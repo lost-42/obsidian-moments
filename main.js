@@ -116,12 +116,20 @@ var ObsidianMomentsPlugin = class extends import_obsidian.Plugin {
     const scope = imageSection != null ? imageSection : content;
     const result = [];
     this.forEachNonCodeSegment(scope, (segment) => {
-      const regex = /!\[\[([^\]]+?)\]\]/g;
-      let match = null;
-      while ((match = regex.exec(segment)) !== null) {
-        const raw = match[1].split("|")[0].trim();
+      const obsidianRegex = /!\[\[([^\]]+?)\]\]/g;
+      let obsidianMatch = null;
+      while ((obsidianMatch = obsidianRegex.exec(segment)) !== null) {
+        const raw = obsidianMatch[1].split("|")[0].trim();
         if (raw) result.push(raw);
       }
+      ;
+      const markdownRegex = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+      let markdownMatch = null;
+      while ((markdownMatch = markdownRegex.exec(segment)) !== null) {
+        const raw = markdownMatch[1].split("|")[0].trim();
+        if (raw) result.push(raw);
+      }
+      ;
     });
     return result;
   }
@@ -333,11 +341,16 @@ ${commentItem}`;
   removeImageLinksFromBody(content) {
     const parts = [];
     this.forEachNonCodeSegment(content, (segment) => {
-      parts.push(segment.replace(/!\[\[[^\]]+?\]\]/g, ""));
+      segment = segment.replace(/!\[\[[^\]]+?\]\]/g, "");
+      segment = segment.replace(/!\[[^\]]*\]\([^)]+\)/g, "");
+      parts.push(segment);
     });
     return parts.join("\n").trim();
   }
   resolveImageResourcePath(link, fromFile) {
+    if (link.match(/^(https?:\/\/|\/\/)/)) {
+      return link;
+    }
     const target = this.app.metadataCache.getFirstLinkpathDest(link, fromFile.path);
     if (!target) return null;
     return this.app.vault.adapter.getResourcePath(target.path);

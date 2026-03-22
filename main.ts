@@ -136,12 +136,20 @@ export default class ObsidianMomentsPlugin extends Plugin {
 		const scope = imageSection ?? content;
 		const result: string[] = [];
 		this.forEachNonCodeSegment(scope, (segment) => {
-			const regex = /!\[\[([^\]]+?)\]\]/g;
-			let match: RegExpExecArray | null = null;
-			while ((match = regex.exec(segment)) !== null) {
-				const raw = match[1].split("|")[0].trim();
+			// 提取 Obsidian 格式
+			const obsidianRegex = /!\[\[([^\]]+?)\]\]/g;
+			let obsidianMatch: RegExpExecArray | null = null;
+			while ((obsidianMatch = obsidianRegex.exec(segment)) !== null) {
+				const raw = obsidianMatch[1].split("|")[0].trim();
 				if (raw) result.push(raw);
-			}
+			};
+			// 提取 Markdown 格式
+			const markdownRegex = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+			let markdownMatch: RegExpExecArray | null = null;
+			while ((markdownMatch = markdownRegex.exec(segment)) !== null) {
+				const raw = markdownMatch[1].split("|")[0].trim();
+				if (raw) result.push(raw);
+			};
 		});
 		return result;
 	}
@@ -361,12 +369,20 @@ export default class ObsidianMomentsPlugin extends Plugin {
 	private removeImageLinksFromBody(content: string): string {
 		const parts: string[] = [];
 		this.forEachNonCodeSegment(content, (segment) => {
-			parts.push(segment.replace(/!\[\[[^\]]+?\]\]/g, ""));
+			segment = segment.replace(/!\[\[[^\]]+?\]\]/g, "");
+			segment = segment.replace(/!\[[^\]]*\]\([^)]+\)/g, "");
+			parts.push(segment);
 		});
 		return parts.join("\n").trim();
 	}
 
 	resolveImageResourcePath(link: string, fromFile: TFile): string | null {
+		// 判断是否是网络URL（以 http://, https://, // 开头）
+		if (link.match(/^(https?:\/\/|\/\/)/)) {
+			return link;
+		}
+
+		// 处理本地文件
 		const target = this.app.metadataCache.getFirstLinkpathDest(link, fromFile.path);
 		if (!target) return null;
 		return this.app.vault.adapter.getResourcePath(target.path);
